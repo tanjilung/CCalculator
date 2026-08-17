@@ -1,4 +1,4 @@
-# CTest — Qt Calculator
+# CCalculator — Qt Calculator
 
 A desktop calculator app built with C++17, CMake, and Qt Widgets.
 
@@ -24,14 +24,14 @@ make
 ## Run
 
 ```bash
-./ctest            # launch the calculator GUI
-ctest             # run the unit tests
+./ccalculator        # launch the calculator GUI
+ctest               # run the unit tests
 ```
 
 ## Project Structure
 
 ```
-CTest/
+CCalculator/
 ├── include/
 │   ├── math_utils.h          # add, subtract, multiply, divide
 │   └── calculator_window.h   # Qt QMainWindow subclass (GUI)
