@@ -1,5 +1,15 @@
 build/
+CMakeCache.txt
+CMakeFiles/
+CTestTestfile.cmake
+cmake_install.cmake
+compile_commands.json
+Makefile
 *.o
+*.a
+*.so
 *.exe
 *.moc
 .vscode/
+*~
+.DS_Store
