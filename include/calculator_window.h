@@ -6,6 +6,7 @@
 
 class QLineEdit;
 class QPushButton;
+class QWidget;
 
 class CalculatorWindow : public QMainWindow {
     Q_OBJECT
