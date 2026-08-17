@@ -32,6 +32,7 @@ private:
     void handleOperation(const QString& op);
     void handleEquals();
     void handleClear();
+    void handleBackspace();
     double compute(double left, const QString& op, double right);
     void formatDisplay(double value);
 };

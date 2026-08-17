@@ -31,13 +31,18 @@ void CalculatorWindow::setupUI() {
     display_->setText("0");
     layout->addWidget(display_, 0, 0, 1, 4);
 
-    // Button labels in grid order (rows 1-5)
+    // Button layout:
+    //   Row 1: C      ⌫     .     /
+    //   Row 2: 7      8     9     *
+    //   Row 3: 4      5     6     -
+    //   Row 4: 1      2     3     +
+    //   Row 5: 0 (span 2 cols)  = (span 2 cols)
     const char* labels[5][4] = {
-        {"7", "8", "9", "/"},
-        {"4", "5", "6", "*"},
-        {"1", "2", "3", "-"},
-        {"C", "0", ".", "+"},
-        {"=", "=", "=", "="}
+        {"C", "⌫", ".", "/"},
+        {"7", "8", "9", "*"},
+        {"4", "5", "6", "-"},
+        {"1", "2", "3", "+"},
+        {"0", "=", "", ""}  // last two empty — = will span cols 2-3
     };
 
     const char* digits[] = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"};
@@ -45,22 +50,30 @@ void CalculatorWindow::setupUI() {
 
     for (int row = 0; row < 5; ++row) {
         for (int col = 0; col < 4; ++col) {
-            QPushButton* btn = new QPushButton(labels[row][col], this);
+            const char* label = labels[row][col];
+            if (!label || !label[0])
+                continue;  // skip filler slots in the last row
+
+            int gridCol = col;
+            int colspan = 1;
+
+            // Last row: "0" spans cols 0-1, "=" spans cols 2-3
+            if (row == 4 && col == 0)
+                colspan = 2;
+            else if (row == 4 && col == 1) {
+                gridCol = 2;
+                colspan = 2;
+            }
+
+            QPushButton* btn = new QPushButton(label, this);
             QFont font(QStringLiteral("Sans"), 18);
             btn->setFont(font);
             btn->setMinimumHeight(55);
 
-            if (row == 4) {
-                // "=" button spans all 4 columns
-                layout->addWidget(btn, 4, 0, 1, 4);
-                QObject::connect(btn, &QPushButton::clicked, this, &CalculatorWindow::handleEquals);
-                break;
-            }
+            layout->addWidget(btn, row + 1, gridCol, 1, colspan);
+            const QString& text = label;
 
-            layout->addWidget(btn, row + 1, col);
-            const QString& text = labels[row][col];
-
-            // Determine if it's a digit, decimal, clear, or operation
+            // Determine if it's a digit, decimal, clear, backspace, or operation
             bool isDigit = false;
             for (const char* d : digits) {
                 if (text == d) { isDigit = true; break; }
@@ -74,6 +87,10 @@ void CalculatorWindow::setupUI() {
                 QObject::connect(btn, &QPushButton::clicked, this, &CalculatorWindow::handleDecimal);
             } else if (text == "C") {
                 QObject::connect(btn, &QPushButton::clicked, this, &CalculatorWindow::handleClear);
+            } else if (text == "⌫") {
+                QObject::connect(btn, &QPushButton::clicked, this, &CalculatorWindow::handleBackspace);
+            } else if (text == "=") {
+                QObject::connect(btn, &QPushButton::clicked, this, &CalculatorWindow::handleEquals);
             } else {
                 // Operation: + - * /
                 QObject::connect(btn, &QPushButton::clicked, this, [this, text]() {
@@ -164,6 +181,21 @@ void CalculatorWindow::handleClear() {
     isNewNumber_ = true;
     hasError_ = false;
     display_->setText("0");
+}
+
+void CalculatorWindow::handleBackspace() {
+    if (hasError_) {
+        handleClear();
+        return;
+    }
+
+    QString text = display_->text();
+    if (text.length() > 1) {
+        text.chop(1);
+        display_->setText(text);
+    } else {
+        display_->setText("0");
+    }
 }
 
 double CalculatorWindow::compute(double left, const QString& op, double right) {
