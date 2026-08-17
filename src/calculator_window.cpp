@@ -1,0 +1,181 @@
+#include "calculator_window.h"
+#include "math_utils.h"
+
+#include <QApplication>
+#include <QGridLayout>
+#include <QLineEdit>
+#include <QPushButton>
+#include <QString>
+#include <QWidget>
+#include <cmath>
+#include <vector>
+
+CalculatorWindow::CalculatorWindow(QWidget* parent)
+    : QMainWindow(parent) {
+    setupUI();
+}
+
+void CalculatorWindow::setupUI() {
+    auto* centralWidget = new QWidget(this);
+    setCentralWidget(centralWidget);
+
+    auto* layout = new QGridLayout(centralWidget);
+    layout->setSpacing(5);
+    layout->setContentsMargins(10, 10, 10, 10);
+
+    // Display
+    display_ = new QLineEdit(this);
+    display_->setReadOnly(true);
+    display_->setAlignment(Qt::AlignRight);
+    display_->setFont(QFont(QStringLiteral("Sans"), 24));
+    display_->setText("0");
+    layout->addWidget(display_, 0, 0, 1, 4);
+
+    // Button labels in grid order (rows 1-5)
+    const char* labels[5][4] = {
+        {"7", "8", "9", "/"},
+        {"4", "5", "6", "*"},
+        {"1", "2", "3", "-"},
+        {"C", "0", ".", "+"},
+        {"=", "=", "=", "="}
+    };
+
+    const char* digits[] = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"};
+    std::vector<QPushButton*> digitButtons;
+
+    for (int row = 0; row < 5; ++row) {
+        for (int col = 0; col < 4; ++col) {
+            QPushButton* btn = new QPushButton(labels[row][col], this);
+            QFont font(QStringLiteral("Sans"), 18);
+            btn->setFont(font);
+            btn->setMinimumHeight(55);
+
+            if (row == 4) {
+                // "=" button spans all 4 columns
+                layout->addWidget(btn, 4, 0, 1, 4);
+                QObject::connect(btn, &QPushButton::clicked, this, &CalculatorWindow::handleEquals);
+                break;
+            }
+
+            layout->addWidget(btn, row + 1, col);
+            const QString& text = labels[row][col];
+
+            // Determine if it's a digit, decimal, clear, or operation
+            bool isDigit = false;
+            for (const char* d : digits) {
+                if (text == d) { isDigit = true; break; }
+            }
+
+            if (isDigit) {
+                QObject::connect(btn, &QPushButton::clicked, this, [this, text]() {
+                    appendDigit(text);
+                });
+            } else if (text == ".") {
+                QObject::connect(btn, &QPushButton::clicked, this, &CalculatorWindow::handleDecimal);
+            } else if (text == "C") {
+                QObject::connect(btn, &QPushButton::clicked, this, &CalculatorWindow::handleClear);
+            } else {
+                // Operation: + - * /
+                QObject::connect(btn, &QPushButton::clicked, this, [this, text]() {
+                    handleOperation(text);
+                });
+            }
+        }
+    }
+
+    display_->setStyleSheet("background-color: #f5f5f5; border-radius: 5px; padding: 10px;");
+}
+
+void CalculatorWindow::appendDigit(const QString& digit) {
+    if (hasError_) {
+        handleClear();
+    }
+
+    if (isNewNumber_) {
+        display_->clear();
+        isNewNumber_ = false;
+    }
+
+    // Prevent leading zeros like "007"
+    if (display_->text() == "0" && digit != ".") {
+        display_->clear();
+    }
+
+    display_->insert(digit);
+}
+
+void CalculatorWindow::handleDecimal() {
+    if (hasError_) {
+        handleClear();
+    }
+
+    if (isNewNumber_) {
+        display_->clear();
+        display_->setText("0");
+        isNewNumber_ = false;
+    }
+
+    if (!display_->text().contains('.')) {
+        display_->insert(".");
+    }
+}
+
+void CalculatorWindow::handleOperation(const QString& op) {
+    if (hasError_) return;
+
+    double current = display_->text().toDouble();
+
+    if (!pendingOperation_.isEmpty() && !isNewNumber_) {
+        // Chain operations: evaluate pending first
+        currentOperand_ = compute(previousOperand_, pendingOperation_, current);
+        formatDisplay(currentOperand_);
+        previousOperand_ = currentOperand_;
+    } else {
+        previousOperand_ = current;
+    }
+
+    pendingOperation_ = op;
+    isNewNumber_ = true;
+}
+
+void CalculatorWindow::handleEquals() {
+    if (hasError_ || pendingOperation_.isEmpty()) return;
+
+    double current = display_->text().toDouble();
+
+    try {
+        double result = compute(previousOperand_, pendingOperation_, current);
+        formatDisplay(result);
+        previousOperand_ = result;
+        pendingOperation_.clear();
+        isNewNumber_ = true;
+    } catch (const std::invalid_argument&) {
+        display_->setText("Error");
+        hasError_ = true;
+        pendingOperation_.clear();
+        isNewNumber_ = true;
+    }
+}
+
+void CalculatorWindow::handleClear() {
+    currentOperand_ = 0.0;
+    previousOperand_ = 0.0;
+    pendingOperation_.clear();
+    isNewNumber_ = true;
+    hasError_ = false;
+    display_->setText("0");
+}
+
+double CalculatorWindow::compute(double left, const QString& op, double right) {
+    if (op == "+") return add(left, right);
+    if (op == "-") return subtract(left, right);
+    if (op == "*") return multiply(left, right);
+    if (op == "/") return divide(left, right);
+    return right;
+}
+
+void CalculatorWindow::formatDisplay(double value) {
+    // Use 'g' format for up to 10 significant digits, no trailing zeros
+    QString text = QString::number(value, 'g', 15);
+    display_->setText(text);
+}

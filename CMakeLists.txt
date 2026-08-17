@@ -4,9 +4,21 @@ project(ctest_project LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Main executable
-add_executable(ctest src/main.cpp src/math_utils.cpp)
+# Enable Qt MOC processing automatically
+set(CMAKE_AUTOMOC ON)
+
+# Find Qt5
+find_package(Qt5 REQUIRED COMPONENTS Widgets)
+
+# Main executable (Qt GUI calculator app)
+add_executable(ctest
+    src/main.cpp
+    src/math_utils.cpp
+    src/calculator_window.cpp
+    include/calculator_window.h
+)
 target_include_directories(ctest PRIVATE include)
+target_link_libraries(ctest PRIVATE Qt5::Widgets)
 
 # Tests
 enable_testing()

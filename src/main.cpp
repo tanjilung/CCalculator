@@ -1,10 +1,11 @@
-#include <iostream>
-#include "math_utils.h"
+#include <QApplication>
+#include "calculator_window.h"
 
-int main() {
-    std::cout << "Hello from CTest!" << std::endl;
-    std::cout << "2 + 3 = " << add(2, 3) << std::endl;
-    std::cout << "10 - 4 = " << subtract(10, 4) << std::endl;
-    std::cout << "5 * 6 = " << multiply(5, 6) << std::endl;
-    return 0;
+int main(int argc, char* argv[]) {
+    QApplication app(argc, argv);
+    CalculatorWindow window;
+    window.setWindowTitle("Calculator");
+    window.resize(320, 420);
+    window.show();
+    return app.exec();
 }
