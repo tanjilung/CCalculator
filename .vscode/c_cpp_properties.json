@@ -3,9 +3,7 @@
         {
             "name": "Linux",
             "includePath": [
-                "${workspaceFolder}/**",
                 "${workspaceFolder}/include",
-                "/usr/include/x86_64-linux-gnu/qt5",
                 "/usr/include/x86_64-linux-gnu/qt5/QtCore",
                 "/usr/include/x86_64-linux-gnu/qt5/QtGui",
                 "/usr/include/x86_64-linux-gnu/qt5/QtWidgets"
@@ -13,12 +11,21 @@
             "defines": [
                 "QT_CORE_LIB",
                 "QT_GUI_LIB",
-                "QT_WIDGETS_LIB"
+                "QT_WIDGETS_LIB",
+                "QT_NO_DEBUG"
             ],
             "compilerPath": "/usr/bin/c++",
             "cStandard": "c17",
             "cppStandard": "c++17",
-            "intelliSenseMode": "linux-gcc-x64"
+            "intelliSenseMode": "linux-gcc-x64",
+            "compilerArgs": [
+                "-isystem",
+                "/usr/include/x86_64-linux-gnu/qt5/QtCore",
+                "-isystem",
+                "/usr/include/x86_64-linux-gnu/qt5/QtGui",
+                "-isystem",
+                "/usr/include/x86_64-linux-gnu/qt5/QtWidgets"
+            ]
         }
     ],
     "version": 4
