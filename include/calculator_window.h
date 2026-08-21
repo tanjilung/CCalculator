@@ -18,7 +18,6 @@ private:
     void setupUI();
 
     // Calculation state
-    double currentOperand_ = 0.0;
     double previousOperand_ = 0.0;
     QString pendingOperation_;
     bool isNewNumber_ = true;

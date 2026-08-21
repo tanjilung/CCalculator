@@ -7,6 +7,16 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Enable Qt MOC processing automatically
 set(CMAKE_AUTOMOC ON)
 
+# Export compile_commands.json for clangd / tooling
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# Compiler warnings (MSVC vs GCC/Clang)
+if (MSVC)
+    add_compile_options(/W4 /permissive-)
+else()
+    add_compile_options(-Wall -Wextra)
+endif()
+
 # Find Qt5
 find_package(Qt5 REQUIRED COMPONENTS Widgets)
 

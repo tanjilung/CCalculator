@@ -1,14 +1,12 @@
 #include "calculator_window.h"
 #include "math_utils.h"
 
-#include <QApplication>
 #include <QGridLayout>
 #include <QLineEdit>
 #include <QPushButton>
 #include <QString>
 #include <QWidget>
-#include <cmath>
-#include <vector>
+#include <QtGlobal>
 
 CalculatorWindow::CalculatorWindow(QWidget* parent)
     : QMainWindow(parent) {
@@ -46,7 +44,6 @@ void CalculatorWindow::setupUI() {
     };
 
     const char* digits[] = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"};
-    std::vector<QPushButton*> digitButtons;
 
     for (int row = 0; row < 5; ++row) {
         for (int col = 0; col < 4; ++col) {
@@ -114,7 +111,7 @@ void CalculatorWindow::appendDigit(const QString& digit) {
     }
 
     // Prevent leading zeros like "007"
-    if (display_->text() == "0" && digit != ".") {
+    if (display_->text() == "0") {
         display_->clear();
     }
 
@@ -142,13 +139,21 @@ void CalculatorWindow::handleOperation(const QString& op) {
 
     double current = display_->text().toDouble();
 
-    if (!pendingOperation_.isEmpty() && !isNewNumber_) {
-        // Chain operations: evaluate pending first
-        currentOperand_ = compute(previousOperand_, pendingOperation_, current);
-        formatDisplay(currentOperand_);
-        previousOperand_ = currentOperand_;
-    } else {
-        previousOperand_ = current;
+    try {
+        if (!pendingOperation_.isEmpty() && !isNewNumber_) {
+            // Chain operations: evaluate pending first
+            previousOperand_ = compute(previousOperand_, pendingOperation_, current);
+            formatDisplay(previousOperand_);
+        } else {
+            previousOperand_ = current;
+        }
+    } catch (const std::invalid_argument&) {
+        // e.g. chained divide-by-zero: "5 / 0 *" must not terminate the app
+        display_->setText("Error");
+        hasError_ = true;
+        pendingOperation_.clear();
+        isNewNumber_ = true;
+        return;
     }
 
     pendingOperation_ = op;
@@ -175,7 +180,6 @@ void CalculatorWindow::handleEquals() {
 }
 
 void CalculatorWindow::handleClear() {
-    currentOperand_ = 0.0;
     previousOperand_ = 0.0;
     pendingOperation_.clear();
     isNewNumber_ = true;
@@ -199,15 +203,16 @@ void CalculatorWindow::handleBackspace() {
 }
 
 double CalculatorWindow::compute(double left, const QString& op, double right) {
-    if (op == "+") return add(left, right);
-    if (op == "-") return subtract(left, right);
-    if (op == "*") return multiply(left, right);
-    if (op == "/") return divide(left, right);
+    if (op == "+") return calc::add(left, right);
+    if (op == "-") return calc::subtract(left, right);
+    if (op == "*") return calc::multiply(left, right);
+    if (op == "/") return calc::divide(left, right);
+    qWarning() << "compute(): unknown operator" << op;
     return right;
 }
 
 void CalculatorWindow::formatDisplay(double value) {
-    // Use 'g' format for up to 10 significant digits, no trailing zeros
+    // Use 'g' format for up to 15 significant digits, no trailing zeros
     QString text = QString::number(value, 'g', 15);
     display_->setText(text);
 }
