@@ -50,7 +50,8 @@ cmake --build . --config Release
 
 ```bash
 ./ccalculator        # launch the calculator GUI
-ctest               # run the unit tests
+ctest                # run the unit tests
+./ccalculator_tests  # run tests directly (per-test OK/FAIL output)
 ```
 
 ### Windows
@@ -58,12 +59,14 @@ ctest               # run the unit tests
 ```bat
 Release\ccalculator.exe        # launch the GUI (from the build dir)
 ctest --test-dir .             # run the unit tests
+Release\ccalculator_tests.exe  # run tests directly
 ```
 
 ## Project Structure
 
 ```
 CCalculator/
+├── CMakeLists.txt            # build config: GUI app + test target, Qt5 setup
 ├── include/
 │   ├── math_utils.h          # add, subtract, multiply, divide
 │   └── calculator_window.h   # Qt QMainWindow subclass (GUI)
